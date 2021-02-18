@@ -2,8 +2,12 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"strconv"
+
+	//"strconv"
+	"../dblayer"
 )
 
 type HandlerInterface interface {
@@ -23,6 +27,11 @@ type Handler struct{
 func NewHandler() (*Handler,error){
 	//Handler 객체에 대한 포인터 생성
 	return new(Handler), nil
+}
+
+func (h *Handler) GetMainPage(c *gin.Context) {
+	log.Println("Main page....")
+	c.String(http.StatusOK, "Main page for secure API!!")
 }
 
 func (h *Handler) GetProducts(c *gin.Context){
@@ -148,6 +157,4 @@ func (h *Handler) Charge(c *gin.Context){
 	if h.db==nil{
 		return
 	}
-
-
 }
