@@ -5,9 +5,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
-	//"strconv"
 	"../dblayer"
+	"../models"
 )
 
 type HandlerInterface interface {
@@ -77,9 +76,14 @@ func (h* Handler) SignIn(c *gin.Context){
 		return
 	}
 
-	customer, err = h.db.SignInUser(customer)
-
+	customer, err = h.db.SignInUser(customer.Email,customer.Pass)
 	if err!=nil{
+		//잘못된 패스워드인 경우 forbidden http 에러 반환
+		if err==dblayer.ErrINVALIDPASSWORD{
+			c.JSON(http.StatusForbidden,gin.H{"error":err.Error()})
+			return
+		}
+
 		c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
 		return
 	}
@@ -115,7 +119,7 @@ func (h *Handler) SignOut(c *gin.Context){
 		return
 	}
 
-	p:=c.Params("id")
+	p:=c.Param("id")
 	id,err:=strconv.Atoi(p)
 	if err!=nil{
 		c.JSON(http.StatusBadRequest,gin.H{"error":err.Error()})
@@ -134,7 +138,7 @@ func (h *Handler) GetOrders(c *gin.Context){
 		return
 	}
 
-	p:=c.Params("id")
+	p:=c.Param("id")
 
 	id,err:=strconv.Atoi(p)
 
