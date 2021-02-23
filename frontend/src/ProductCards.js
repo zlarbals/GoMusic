@@ -15,13 +15,13 @@ class Card extends React.Component {
             alg={this.props.imgalt}
           />
           <div className="card-body">
-            <h4 className="cardtitle">{this.props.productname}</h4>
+            <h4 className="card-title">{this.props.productname}</h4>
             Price: <strong className={priceColor}>{sellPrice}</strong>
             <p className="card-text">{this.props.desc}</p>
             <a
               className="btn btn-success text-white"
               onClick={() => {
-                this.props.showBuyModal(this.props.ID, sellPrice);
+                this.props.showBuyModal(this.props.id, sellPrice);
               }}
             >
               Buy
@@ -55,7 +55,7 @@ export default class CardContainer extends React.Component {
     const cards = this.state.cards;
     let items = cards.map((card) => (
       <Card
-        key={card.id}
+        key={card.ID}
         {...card}
         promo={this.props.promo}
         showBuyModal={this.props.showBuyModal}

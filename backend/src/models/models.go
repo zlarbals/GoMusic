@@ -7,7 +7,7 @@ import (
 
 type Customer struct{
 	gorm.Model
-	Name string `json:"name"`
+	Name string `json:"name" sql:"-"`
 	FirstName string `gorm:"column:firstname" json:"firstname"`
 	LastName string `gorm:"column:lastname" json:"lastname"`
 	Email string `gorm:"column:email" json:"email"`
@@ -37,15 +37,25 @@ func (Product) TableName() string {
 
 type Order struct {
 	gorm.Model
-	Product
-	Customer
 	CustomerID   int       `json:"customer_id" gorm:"column:customer_id"`
 	ProductID    int       `json:"product_id" gorm:"column:product_id"`
 	Price        float64   `gorm:"column:price" json:"sell_price"`
 	PurchaseDate time.Time `gorm:"column:purchase_date" json:"purchase_date"`
+	Customer	`sql:"-"`
+	Product		`sql:"-"`
 }
 
 func (Order) TableName() string {
 	return "orders"
+}
+
+type OrderDto struct {
+	gorm.Model
+	CustomerID   int       `json:"customer_id" gorm:"column:customer_id"`
+	ProductID    int       `json:"product_id" gorm:"column:product_id"`
+	Price        float64   `gorm:"column:price" json:"sell_price"`
+	PurchaseDate time.Time `gorm:"column:purchase_date" json:"purchase_date"`
+	Customer
+	Product
 }
 

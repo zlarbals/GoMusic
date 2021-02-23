@@ -5,11 +5,17 @@ import(
 )
 
 func RunAPI(address string) error{
+	//핸들러
+	h, err:=NewHandler()
+	if err!=nil{
+		return err
+	}
+	return RunAPIWithHandler(address,h)
+}
+
+func RunAPIWithHandler(address string,h HandlerInterface) error{
 	//Gin 엔진
 	r:=gin.Default()
-
-	//핸들러
-	h,_:=NewHandler()
 
 	//메인 페이지
 	r.GET("/",h.GetMainPage)

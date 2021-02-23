@@ -11,7 +11,7 @@ function Order(props) {
           <div className="row">
             <div className="mx-auto col-6">
               <img
-                src={props.img}
+                src={props.small_img}
                 alt={props.imgalt}
                 className="img-thumbnail float-left"
               />
@@ -19,13 +19,13 @@ function Order(props) {
             <div className="col-6">
               <p className="card-text">{props.desc}</p>
               <div className="mt-4">
-                Price: <string>{props.price}</string>
+                Price: <string>{props.sell_price}</string>
               </div>
             </div>
           </div>
         </div>
         <div className="card-footer text-muted">
-          Purchased {props.days} days ago
+          Purchased {new Date(props.CreatedAt).toLocaleDateString("en-US")}
         </div>
       </div>
       <div className="mt-3" />
@@ -41,13 +41,22 @@ export default class OrderContainer extends React.Component {
     };
   }
 
+  componentDidMount() {
+    console.log("fetching location: " + this.props.location);
+    fetch(this.props.location)
+      .then((res) => res.json())
+      .then((result) => {
+        this.setState({
+          orders: result,
+        });
+      });
+    console.log("orders received: " + this.state.orders);
+  }
+
   render() {
-    return (
-      <div className="row mt-5">
-        {this.state.orders.map((order) => (
-          <Order key={order.id} {...order} />
-        ))}
-      </div>
-    );
+    const orders = this.state.orders;
+    console.log(orders);
+    let items = orders.map((order) => <Order key={order.ID} {...order} />);
+    return <div className="row mt-5">{items}</div>;
   }
 }

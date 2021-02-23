@@ -1,7 +1,13 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import cookie from "js-cookie";
 
 export default class Navigation extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleSignOut = this.handleSignOut.bind(this);
+  }
+
   buildLoggedInMenu() {
     return (
       <div className="navbar-brand order-1 text-white my-auto">
@@ -16,13 +22,37 @@ export default class Navigation extends React.Component {
             WelCome {this.props.user.name}
           </button>
           <div className="dropdown-menu">
-            <a className="btn dropdown-item" role="button">
+            <a
+              className="btn dropdown-item"
+              role="button"
+              onClick={this.handleSignOut}
+            >
               Sign Out
             </a>
           </div>
         </div>
       </div>
     );
+  }
+
+  handleSignOut(e) {
+    e.preventDefault();
+    const user = cookie.getJSON("user");
+    if (user === undefined) {
+      console.log("Can't sign out as no user cookie found...");
+      return;
+    }
+
+    console.log("Sign out: " + user);
+    fetch("user/" + user.ID + "/signout", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
+    this.props.handleSignedOut();
+    console.log("Handle sign out");
   }
 
   render() {
@@ -39,6 +69,7 @@ export default class Navigation extends React.Component {
                 className="navbar-brand order-1 btn btn-success"
                 onClick={() => {
                   this.props.showModalWindow();
+                  console.log("show called");
                 }}
               >
                 Sign in

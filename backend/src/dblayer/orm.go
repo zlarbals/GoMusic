@@ -2,6 +2,7 @@ package dblayer
 
 import (
 	"errors"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"../models"
@@ -59,6 +60,7 @@ func (db *DBORM) SignInUser(email, pass string) (customer models.Customer, err e
 	//입력된 이메일로 사용자 정보 조회
 	err = result.First(&customer).Error
 	if err != nil{
+		fmt.Println("조회 에러")
 		return customer,err
 	}
 
@@ -93,12 +95,44 @@ func (db *DBORM) SignOutUserById(id int) error {
 	return db.Table("customers").Where(&customer).Update("loggedin", 0).Error
 }
 
-func (db *DBORM) GetCustomerOrderByID(id int) (orders []models.Order, err error) {
-	return orders, db.Table("orders").Select("*").
-		Joins("join customers on customers.id = costomer_id").
-		Joins("join products on products.id=product_id").
-		Where("customer_id=?", id).
-		Scan(&orders).Error
+func (db *DBORM) GetCustomerOrderByID(id int) (ordersDto []models.OrderDto, err error) {
+
+	//return orders, db.Table("orders").Select("*").Joins("join customers on customers.id = customer_id").Joins("join products on products.id = product_id").Where("customer_id=?", id).Scan(&orders).Error
+	//fmt.Println(id)
+
+	//db.Table("orders").Select("*").Joins("join")
+
+	//err = db.Find(&orders,models.Order{CustomerID: id}).Error
+	//
+	return ordersDto, db.Table("orders").Select("*").
+		Joins("left join customers on customers.id = orders.customer_id").
+		Joins("left join products on products.id=orders.product_id").
+		Where("orders.customer_id=?", id).
+		Scan(&ordersDto).Error
+
+	//err=db.Find(&orders,models.Order{CustomerID:id}).Error
+
+	//return orders,err
+}
+
+//orders 테이블에 결제 내역 추가
+func (db *DBORM) AddOrder(order models.Order) error{
+	return db.Create(&order).Error
+}
+
+//신용카드 ID 조회
+func (db *DBORM) GetCreditCardID(id int) (string,error){
+	customerWithCCID:= struct {
+		models.Customer
+		CCID string `gorm:"column:cc_customerid"`
+	}{}
+	return customerWithCCID.CCID,db.First(&customerWithCCID,id).Error
+}
+
+//신용카드 정보 저장
+func (db *DBORM) SaveCreditCardForCustomer(id int, ccid string) error{
+	result := db.Table("customers").Where("id=?",id)
+	return result.Update("cc_customerid",ccid).Error
 }
 
 func hashPassword(s *string) error {
@@ -123,3 +157,4 @@ func hashPassword(s *string) error {
 func checkPassword(existingHash, incomingPass string) bool{
 	return bcrypt.CompareHashAndPassword([]byte(existingHash),[]byte(incomingPass))==nil
 }
+

@@ -1,6 +1,30 @@
 import React from "react";
 import { Modal, ModalHeader, ModalBody } from "reactstrap";
 import CreditCardInformation from "./CreditCards";
+import cookie from "js-cookie";
+
+function submitRequest(path, requestBody, handleSignedIn, handleError) {
+  fetch(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  })
+    .then((response) => response.json())
+    .then((json) => {
+      console.log("Response received...");
+      if (json.error === undefined || !json.error) {
+        console.log("Sigi in Success...");
+        cookie.set("user", json);
+        handleSignedIn(json);
+      } else {
+        handleError(json.error);
+      }
+    })
+    .catch((error) => console.log(error));
+}
 
 export function BuyModalWindow(props) {
   return (
@@ -17,7 +41,11 @@ export function BuyModalWindow(props) {
         </ModalHeader>
         <ModalBody>
           <CreditCardInformation
+            user={props.user}
+            separator={false}
             show={true}
+            productid={props.productid}
+            price={props.price}
             operation="Charge"
             toggle={props.toggle}
           />
@@ -32,6 +60,7 @@ class SignInForm extends React.Component {
     super(props);
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleError = this.handleError.bind(this);
     this.state = {
       errormessage: "",
     };
@@ -45,9 +74,20 @@ class SignInForm extends React.Component {
     });
   }
 
+  handleError(error) {
+    this.setState({
+      errormessage: error,
+    });
+  }
+
   handleSubmit(event) {
     event.preventDefault();
-    console.log(JSON.stringify(this.state));
+    submitRequest(
+      "users/signin",
+      this.state,
+      this.props.handleSignedIn,
+      this.handleError
+    );
   }
 
   render() {
@@ -111,6 +151,7 @@ class RegistrationForm extends React.Component {
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleError = this.handleError.bind(this);
   }
 
   handleChange(event) {
@@ -122,14 +163,41 @@ class RegistrationForm extends React.Component {
     });
   }
 
+  handleError(error) {
+    this.setState({
+      errormessage: error,
+    });
+  }
+
   handleSubmit(event) {
     event.preventDefault();
-    console.log(this.state);
+    const userInfo = this.state;
+    const firstlastname = userInfo.username.split(" ");
+    if (userInfo.pass1 !== userInfo.pass2) {
+      alert("PASSWORD DO NOT MATCH");
+      return;
+    }
+
+    const requestBody = {
+      firstname: firstlastname[0],
+      lastname: firstlastname[1],
+      email: userInfo.email,
+      password: userInfo.pass1,
+    };
+
+    submitRequest(
+      "users",
+      requestBody,
+      this.props.handleSignedIn,
+      this.handleError
+    );
+
+    console.log("Registration form: " + requestBody);
   }
 
   render() {
     let message = null;
-    if (this.state.errormessage.length != 0) {
+    if (this.state.errormessage.length !== 0) {
       message = <h5 className="mb-4 text-danger">{this.state.errormessage}</h5>;
     }
     return (
@@ -198,6 +266,7 @@ export class SignInModalWindow extends React.Component {
       showRegistrationForm: false,
     };
     this.handleNewUser = this.handleNewUser.bind(this);
+    this.handleModalClose = this.handleModalClose.bind(this);
   }
 
   handleNewUser() {
@@ -206,10 +275,23 @@ export class SignInModalWindow extends React.Component {
     });
   }
 
+  handleModalClose() {
+    this.setState({
+      showRegistrationForm: false,
+    });
+  }
+
   render() {
-    let modalBody = <SignInForm handleNewUser={this.handleNewUser} />;
+    let modalBody = (
+      <SignInForm
+        handleNewUser={this.handleNewUser}
+        handleSignedIn={this.props.handleSignedIn}
+      />
+    );
     if (this.state.showRegistrationForm === true) {
-      modalBody = <RegistrationForm />;
+      modalBody = (
+        <RegistrationForm handleSignedIn={this.props.handleSignedIn} />
+      );
     }
 
     return (
@@ -219,6 +301,7 @@ export class SignInModalWindow extends React.Component {
         role="dialog"
         isOpen={this.props.showModal}
         toggle={this.props.toggle}
+        onClosed={this.handleModalClose}
       >
         <div role="document">
           <ModalHeader
@@ -226,9 +309,6 @@ export class SignInModalWindow extends React.Component {
             className="bg-success text-white"
           >
             Sign in
-            {/*<button className="close">
-            <span aria-hidden="true">&times;</span>
-            </button>*/}
           </ModalHeader>
           <ModalBody>{modalBody}</ModalBody>
         </div>
